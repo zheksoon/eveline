@@ -241,6 +241,9 @@ function computed(fn, checkFn) {
     };
 }
 
+observable.prop = observable;
+computed.prop = computed;
+
 function reaction(fn, _this, manager) {
     let subscriptions = [];
     let children = [];
