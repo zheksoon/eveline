@@ -1,7 +1,7 @@
 {
     "name": "eveline",
-    "description": "Full-featured 1KB state management",
-    "version": "0.0.3",
+    "description": "☘️ Full-featured 1KB reactive state management ☘️",
+    "version": "0.0.4",
     "source": "src/eveline.js",
     "main": "./dist/eveline.js",
     "umd:main": "./dist/eveline.umd.js",
