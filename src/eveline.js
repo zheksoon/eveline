@@ -212,11 +212,11 @@ function computed(fn, checkFn) {
                 }
 
                 if (checkFn && oldState !== States.NOT_INITIALIZED) {
-                    if (!checkFn(oldValue, value)) {
+                    if (checkFn(oldValue, value)) {
                         value = oldValue;
-                        return;
+                    } else {
+                        notify(States.DIRTY);
                     }
-                    notify(States.DIRTY);
                 }
             }
         },
