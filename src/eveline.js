@@ -199,9 +199,7 @@ function computed(fn, checkFn) {
                 const oldState = state;
                 const oldValue = value;
                 const oldSubscriber = subscriber;
-                subscriber = cacheOnUntrackedRead
-                    ? self
-                    : oldSubscriber && self;
+                subscriber = (cacheOnUntrackedRead || subscriber) && self;
                 state = States.COMPUTING;
                 try {
                     value = fn();
@@ -310,6 +308,8 @@ function model(_this, model) {
         _this = {};
     }
 
+    const fields = {};
+
     if (model.data) {
         const data =
             typeof model.data === "function" ? model.data() : model.data;
@@ -319,15 +319,7 @@ function model(_this, model) {
                 val && typeof val === "object" && val.$$observable
                     ? val
                     : observable(val);
-            Object.defineProperty(_this, key, {
-                enumerable: true,
-                get() {
-                    return obs.value;
-                },
-                set(value) {
-                    obs.value = value;
-                },
-            });
+            fields[key] = obs;
             _this["$" + key] = obs;
         });
     }
@@ -339,15 +331,12 @@ function model(_this, model) {
                 val && typeof val === "object" && val.$$computed
                     ? val
                     : computed(val);
-            Object.defineProperty(_this, key, {
-                enumerable: true,
-                get() {
-                    return comp.value;
-                },
-            });
+            fields[key] = comp;
             _this["$" + key] = comp;
         });
     }
+
+    makeObservable(_this, fields);
 
     if (model.actions) {
         Object.keys(model.actions).forEach((key) => {
@@ -362,6 +351,36 @@ function model(_this, model) {
     return _this;
 }
 
+function makeObservable(_this, obj) {
+    if (!obj) obj = _this;
+
+    Object.keys(obj).forEach((key) => {
+        const val = obj[key];
+        if (val && typeof val === "object") {
+            if (val.$$observable) {
+                Object.defineProperty(_this, key, {
+                    enumerable: true,
+                    get() {
+                        return val.value;
+                    },
+                    set(value) {
+                        val.value = value;
+                    },
+                });
+            } else if (val.$$computed) {
+                Object.defineProperty(_this, key, {
+                    enumerable: true,
+                    get() {
+                        return val.value;
+                    },
+                });
+            }
+        }
+    });
+
+    return _this;
+}
+
 module.exports = {
     observable,
     computed,
@@ -371,4 +390,5 @@ module.exports = {
     action,
     configure,
     model,
+    makeObservable,
 };
