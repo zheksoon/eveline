@@ -1,10 +1,3 @@
-const NOTIFY = Symbol();
-const ADD_SUBSCRIPTION = Symbol();
-const ADD_SUBSCRIBER = Symbol();
-const REMOVE_SUBSCRIBER = Symbol();
-const ACTUALIZE_AND_RECOMPUTE = Symbol();
-const ADD_CHILD = Symbol();
-
 const States = {
     NOT_INITIALIZED: 0,
     CLEAN: 1,
@@ -22,9 +15,15 @@ let reactionsScheduled = false;
 let reactionsQueue = [];
 let reactionsRunner = apply;
 let stateActualizationQueue = [];
+let cacheOnUntrackedRead = true;
 
-function setRunner(runner) {
-    reactionsRunner = runner;
+function configure(options) {
+    if (options.reactionRunner !== undefined) {
+        reactionsRunner = options.reactionRunner;
+    }
+    if (options.cacheOnUntrackedRead !== undefined) {
+        cacheOnUntrackedRead = options.cacheOnUntrackedRead;
+    }
 }
 
 function tx(fn) {
@@ -75,7 +74,7 @@ function runReactions() {
         while (reactionsQueue.length || stateActualizationQueue.length) {
             let comp;
             while ((comp = stateActualizationQueue.pop())) {
-                comp[ACTUALIZE_AND_RECOMPUTE]();
+                comp._actualizeAndRecompute();
             }
 
             while (reactionsQueue.length && --i) {
@@ -101,10 +100,24 @@ function observable(value, checkFn) {
     let subscribers = new Set();
 
     const self = {
+        _addSubscriber(subscriber) {
+            subscribers.add(subscriber);
+        },
+        _removeSubscriber(subscriber) {
+            subscribers.delete(subscriber);
+        },
+    };
+
+    const notify = () => {
+        subscribers.forEach((subs) => subs._notify(States.DIRTY, self));
+        !txDepth && endTx();
+    };
+
+    return {
         get value() {
             if (subscriber && !subscribers.has(subscriber)) {
                 subscribers.add(subscriber);
-                subscriber[ADD_SUBSCRIPTION](self);
+                subscriber._addSubscription(self);
             }
             return value;
         },
@@ -113,21 +126,11 @@ function observable(value, checkFn) {
                 return;
             }
             value = _value;
-            self.notify();
+            notify();
         },
-        notify() {
-            subscribers.forEach((subs) => subs[NOTIFY](States.DIRTY, self));
-            !txDepth && endTx();
-        },
-        [ADD_SUBSCRIBER]: (subscriber) => {
-            subscribers.add(subscriber);
-        },
-        [REMOVE_SUBSCRIBER]: (subscriber) => {
-            subscribers.delete(subscriber);
-        },
+        notify,
+        $$observable: true,
     };
-
-    return self;
 }
 
 function computed(fn, checkFn) {
@@ -138,7 +141,7 @@ function computed(fn, checkFn) {
     let subscribers = new Set();
 
     const removeSubscriptions = () => {
-        subscriptions.forEach((subs) => subs[REMOVE_SUBSCRIBER](self));
+        subscriptions.forEach((subs) => subs._removeSubscriber(self));
         subscriptions = [];
         subscriptionsToActualize = [];
     };
@@ -150,72 +153,22 @@ function computed(fn, checkFn) {
     };
 
     const notify = (state) => {
-        subscribers.forEach((subs) => subs[NOTIFY](state, self));
-    };
-
-    const actualizeAndRecompute = () => {
-        if (state === States.MAYBE_DIRTY) {
-            const isClean = subscriptionsToActualize.every((subs) => {
-                subs[ACTUALIZE_AND_RECOMPUTE]();
-                return state === States.MAYBE_DIRTY;
-            });
-            isClean && (state = States.CLEAN);
-            subscriptionsToActualize = [];
-        }
-
-        if (state === States.DIRTY || state === States.NOT_INITIALIZED) {
-            const oldState = state;
-            const oldValue = value;
-            const oldSubscriber = subscriber;
-            subscriber = self;
-            state = States.COMPUTING;
-            try {
-                value = fn();
-                state = States.CLEAN;
-            } catch (e) {
-                destroy();
-                throw e;
-            } finally {
-                subscriber = oldSubscriber;
-            }
-
-            if (checkFn && oldState !== States.NOT_INITIALIZED) {
-                if (!checkFn(oldValue, value)) {
-                    value = oldValue;
-                    return;
-                }
-                notify(States.DIRTY);
-            }
-        }
+        subscribers.forEach((subs) => subs._notify(state, self));
     };
 
     const self = {
-        get value() {
-            if (state === States.COMPUTING) {
-                throw new Error("recursive computed call");
-            }
-
-            actualizeAndRecompute();
-
-            if (subscriber && !subscribers.has(subscriber)) {
-                subscribers.add(subscriber);
-                subscriber[ADD_SUBSCRIPTION](self);
-            }
-
-            return value;
-        },
-        [ADD_SUBSCRIPTION]: (subscription) => {
+        _addSubscription(subscription) {
             subscriptions.push(subscription);
         },
-        [ADD_SUBSCRIBER]: (subscriber) => {
+        _addSubscriber(subscriber) {
             subscribers.add(subscriber);
         },
-        [REMOVE_SUBSCRIBER]: (subscriber) => {
+        _removeSubscriber(subscriber) {
             subscribers.delete(subscriber);
             !subscribers.size &&
                 subscriberChecks.push(() => !subscribers.size && destroy());
         },
-        [NOTIFY]: (_state, subscription) => {
+        _notify(_state, subscription) {
             if (state >= _state) return;
 
             if (checkFn) {
@@ -232,38 +185,89 @@ function computed(fn, checkFn) {
                 removeSubscriptions();
             }
         },
-        [ACTUALIZE_AND_RECOMPUTE]: actualizeAndRecompute,
+        _actualizeAndRecompute() {
+            if (state === States.MAYBE_DIRTY) {
+                const isClean = subscriptionsToActualize.every((subs) => {
+                    subs._actualizeAndRecompute();
+                    return state === States.MAYBE_DIRTY;
+                });
+                isClean && (state = States.CLEAN);
+                subscriptionsToActualize = [];
+            }
+
+            if (state === States.DIRTY || state === States.NOT_INITIALIZED) {
+                const oldState = state;
+                const oldValue = value;
+                const oldSubscriber = subscriber;
+                subscriber = cacheOnUntrackedRead
+                    ? self
+                    : oldSubscriber && self;
+                state = States.COMPUTING;
+                try {
+                    value = fn();
+                    state = States.CLEAN;
+                } catch (e) {
+                    destroy();
+                    throw e;
+                } finally {
+                    subscriber = oldSubscriber;
+                }
+
+                if (checkFn && oldState !== States.NOT_INITIALIZED) {
+                    if (!checkFn(oldValue, value)) {
+                        value = oldValue;
+                        return;
+                    }
+                    notify(States.DIRTY);
+                }
+            }
+        },
     };
 
-    return self;
+    return {
+        get value() {
+            if (state === States.COMPUTING) {
+                throw new Error("recursive computed call");
+            }
+
+            self._actualizeAndRecompute();
+
+            if (subscriber && !subscribers.has(subscriber)) {
+                subscribers.add(subscriber);
+                subscriber._addSubscription(self);
+            }
+
+            return value;
+        },
+        $$computed: true,
+    };
 }
 
 function reaction(fn, _this, manager) {
     let subscriptions = [];
     let children = [];
-    let willRun = true;
+    let isDestroyed = false;
 
     const destroy = () => {
-        subscriptions.forEach((subs) => subs[REMOVE_SUBSCRIBER](self));
+        subscriptions.forEach((subs) => subs._removeSubscriber(self));
         subscriptions = [];
 
         children.forEach((child) => child.destroy());
         children = [];
 
-        willRun = false;
+        isDestroyed = true;
     };
 
     function run() {
-        if (!willRun) return;
-
         destroy();
 
-        subscriber && subscriber[ADD_CHILD](self);
+        subscriber && subscriber._addChild(self);
 
         const oldSubscriber = subscriber;
         subscriber = self;
         ++txDepth;
         try {
+            isDestroyed = false;
             return fn.apply(_this, arguments);
         } finally {
             subscriber = oldSubscriber;
@@ -272,32 +276,32 @@ function reaction(fn, _this, manager) {
     }
 
     const self = {
-        run,
-        destroy,
-        unsubscribe() {
-            subscriptions.forEach((subs) => subs[REMOVE_SUBSCRIBER](self));
-        },
-        subscribe() {
-            subscriptions.forEach((subs) => subs[ADD_SUBSCRIBER](self));
-        },
-        [ADD_SUBSCRIPTION]: (subscription) => {
+        _addSubscription(subscription) {
             subscriptions.push(subscription);
         },
-        [ADD_CHILD]: (child) => {
+        _addChild(child) {
             children.push(child);
         },
-        [NOTIFY]: (state, subscription) => {
+        _notify(state, subscription) {
             if (state === States.MAYBE_DIRTY) {
                 stateActualizationQueue.push(subscription);
-            } else if (!willRun) {
+            } else if (!isDestroyed) {
                 destroy();
-                willRun = true;
                 reactionsQueue.push(manager || run);
             }
         },
     };
 
-    return self;
+    return {
+        run,
+        destroy,
+        unsubscribe() {
+            subscriptions.forEach((subs) => subs._removeSubscriber(self));
+        },
+        subscribe() {
+            subscriptions.forEach((subs) => subs._addSubscriber(self));
+        },
+    };
 }
 
 function model(_this, model) {
@@ -312,7 +316,7 @@ function model(_this, model) {
         Object.keys(data).forEach((key) => {
             const val = data[key];
             const obs =
-                val && typeof val === "object" && val[REMOVE_SUBSCRIBER]
+                val && typeof val === "object" && val.$$observable
                     ? val
                     : observable(val);
             Object.defineProperty(_this, key, {
@@ -332,7 +336,7 @@ function model(_this, model) {
         Object.keys(model.computed).forEach((key) => {
             const val = model.computed[key];
             const comp =
-                val && typeof val === "object" && val[REMOVE_SUBSCRIBER]
+                val && typeof val === "object" && val.$$computed
                     ? val
                     : computed(val);
             Object.defineProperty(_this, key, {
@@ -365,6 +369,6 @@ module.exports = {
     tx,
     utx,
     action,
-    setRunner,
+    configure,
     model,
 };
