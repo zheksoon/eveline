@@ -384,7 +384,7 @@ function makeObservable(_this, obj) {
     return _this;
 }
 
-module.exports = {
+export {
     observable,
     computed,
     reaction,
