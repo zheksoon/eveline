@@ -244,7 +244,7 @@ function computed(fn, checkFn) {
 observable.prop = observable;
 computed.prop = computed;
 
-function reaction(fn, _this, manager) {
+function reaction(fn, manager) {
     let subscriptions = [];
     let children = [];
     let isDestroyed = false;
@@ -269,7 +269,7 @@ function reaction(fn, _this, manager) {
         ++txDepth;
         try {
             isDestroyed = false;
-            return fn.apply(_this, arguments);
+            return fn.apply(undefined, arguments);
         } finally {
             subscriber = oldSubscriber;
             if (!--txDepth) endTx();

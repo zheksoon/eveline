@@ -1,44 +1,51 @@
 {
-  "name": "eveline",
-  "version": "0.0.1",
-  "description": "Full-featured 1KB state management",
-  "source": "src/eveline.js",
-  "exports": {
-    "default": "./dist/eveline.modern.js",
-    "require": "./dist/eveline.js"
-  },
-  "main": "./dist/eveline.js",
-  "module": "./dist/eveline.module.js",
-  "unpkg": "./dist/eveline.umd.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "microbundle"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/zheksoon/eveline.git"
-  },
-  "keywords": [
-    "state",
-    "management",
-    "signal",
-    "observable",
-    "computed",
-    "reactive",
-    "frp",
-    "tfrp",
-    "react"
-  ],
-  "author": "Eugene Daragan",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/zheksoon/eveline/issues"
-  },
-  "homepage": "https://github.com/zheksoon/eveline#readme",
-  "devDependencies": {
-    "microbundle": "^0.15.1"
-  },
-  "mangle": {
-    "regex": "^_"
-  }
+    "name": "eveline",
+    "description": "Full-featured 1KB state management",
+    "version": "0.0.2",
+    "source": "src/eveline.js",
+    "main": "./dist/eveline.js",
+    "umd:main": "./dist/eveline.umd.js",
+    "module": "./dist/eveline.module.js",
+    "unpkg": "./dist/eveline.umd.js",
+    "types": "./src/eveline.d.ts",
+    "exports": {
+        ".": {
+            "types": "./src/eveline.d.ts",
+            "browser": "./dist/eveline.module.js",
+            "umd": "./dist/eveline.umd.js",
+            "import": "./dist/eveline.mjs",
+            "require": "./dist/eveline.js"
+        }
+    },
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "build": "microbundle --generateTypes=false"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/zheksoon/eveline.git"
+    },
+    "keywords": [
+        "state",
+        "management",
+        "signal",
+        "observable",
+        "computed",
+        "reactive",
+        "frp",
+        "tfrp",
+        "react"
+    ],
+    "author": "Eugene Daragan",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/zheksoon/eveline/issues"
+    },
+    "homepage": "https://github.com/zheksoon/eveline#readme",
+    "devDependencies": {
+        "microbundle": "^0.15.1"
+    },
+    "mangle": {
+        "regex": "^_"
+    }
 }
