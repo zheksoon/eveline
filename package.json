@@ -17,6 +17,15 @@
             "require": "./dist/eveline.js"
         }
     },
+    "files": [
+        "src/",
+        "dist/",
+        "LICENSE",
+        "README.md",
+        ".prettierrc",
+        "package.json",
+        "yarn.lock"
+    ],
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
         "build": "microbundle --generateTypes=false"
