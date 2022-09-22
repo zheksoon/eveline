@@ -104,8 +104,8 @@ export function action<Args, Result>(
     fn: (...args: Args) => Result
 ): (...args: Args) => Result;
 
-export function model<T extends Model>(_model: T): ReturnModel<T>;
-export function model<T extends Model, S extends ReturnModel<T>>(
+export function makeModel<T extends Model>(_model: T): ReturnModel<T>;
+export function makeModel<T extends Model, S extends ReturnModel<T>>(
     _this: S,
     _model: T
 ): S;

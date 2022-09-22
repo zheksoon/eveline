@@ -27,7 +27,7 @@
         "yarn.lock"
     ],
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1",
+        "test": "jest",
         "build": "microbundle --generateTypes=false"
     },
     "repository": {
@@ -52,6 +52,7 @@
     },
     "homepage": "https://github.com/zheksoon/eveline#readme",
     "devDependencies": {
+        "jest": "^29.0.3",
         "microbundle": "^0.15.1"
     },
     "mangle": {

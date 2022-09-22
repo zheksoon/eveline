@@ -99,6 +99,8 @@ function runReactions() {
 function observable(value, checkFn) {
     let subscribers = new Set();
 
+    checkFn = checkFn && action(checkFn);
+
     const self = {
         _addSubscriber(subscriber) {
             subscribers.add(subscriber);
@@ -139,6 +141,8 @@ function computed(fn, checkFn) {
     let subscriptions = [];
     let subscriptionsToActualize = [];
     let subscribers = new Set();
+
+    checkFn = checkFn && action(checkFn);
 
     const removeSubscriptions = () => {
         subscriptions.forEach((subs) => subs._removeSubscriber(self));
@@ -199,11 +203,14 @@ function computed(fn, checkFn) {
                 const oldState = state;
                 const oldValue = value;
                 const oldSubscriber = subscriber;
-                subscriber = (cacheOnUntrackedRead || subscriber) && self;
+                subscriber = (cacheOnUntrackedRead || oldSubscriber) && self;
                 state = States.COMPUTING;
                 try {
                     value = fn();
-                    state = States.CLEAN;
+                    state =
+                        cacheOnUntrackedRead || oldSubscriber
+                            ? States.CLEAN
+                            : States.DIRTY;
                 } catch (e) {
                     destroy();
                     throw e;
@@ -305,7 +312,7 @@ function reaction(fn, manager) {
     };
 }
 
-function model(_this, model) {
+function makeModel(_this, model) {
     if (!model) {
         model = _this;
         _this = {};
@@ -392,6 +399,6 @@ export {
     utx,
     action,
     configure,
-    model,
+    makeModel,
     makeObservable,
 };

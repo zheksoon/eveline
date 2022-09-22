@@ -80,11 +80,11 @@ tx(() => {
 Easily make observable values transparent and collocate related computeds and actions in one place
 
 ```jsx
-import { model } from 'eveline';
+import { makeModel } from 'eveline';
 import { reactive } from 'eveline/react';
 
 const makeCounter = (initial) => {
-  const self = model({
+  const self = makeModel({
     data: {
       count: initial,
     },
