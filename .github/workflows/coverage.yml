@@ -1,0 +1,31 @@
+name: Running Code Coverage
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 1
+
+    - name: Setup Node.js environment
+      uses: actions/setup-node@v3
+      with:
+        node-version: 18
+        cache: 'yarn'
+
+    - name: Install dependencies
+      run: yarn -D
+
+    - name: Run tests
+      run: yarn test:coverage
+  
+    - name: Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+
