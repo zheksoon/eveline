@@ -40,7 +40,7 @@ function utx(fn) {
     subscriber = undefined;
     ++txDepth;
     try {
-        fn();
+        return fn();
     } finally {
         subscriber = oldSubscriber;
         if (!--txDepth) endTx();
@@ -62,7 +62,9 @@ function action(fn) {
 }
 
 function endTx() {
-    if (!reactionsScheduled) {
+    const shouldRunReactions =
+        reactionsQueue.length || stateActualizationQueue.length;
+    if (!reactionsScheduled && shouldRunReactions) {
         reactionsScheduled = true;
         reactionsRunner(runReactions);
     }
@@ -93,6 +95,7 @@ function runReactions() {
         }
     } finally {
         reactionsScheduled = false;
+        reactionsQueue = [];
     }
 }
 
@@ -124,6 +127,9 @@ function observable(value, checkFn) {
             return value;
         },
         set value(_value) {
+            if (subscriber && subscriber._actualizeAndRecompute) {
+                throw new Error("changing observable inside of computed");
+            }
             if (checkFn && checkFn(value, _value)) {
                 return;
             }
@@ -165,12 +171,16 @@ function computed(fn, checkFn) {
             subscriptions.push(subscription);
         },
         _addSubscriber(subscriber) {
+            if (state !== States.CLEAN) {
+                self._actualizeAndRecompute();
+            }
             subscribers.add(subscriber);
         },
         _removeSubscriber(subscriber) {
             subscribers.delete(subscriber);
-            !subscribers.size &&
+            if (!subscribers.size) {
                 subscriberChecks.push(() => !subscribers.size && destroy());
+            }
         },
         _notify(_state, subscription) {
             if (state >= _state) return;
@@ -199,7 +209,7 @@ function computed(fn, checkFn) {
                 subscriptionsToActualize = [];
             }
 
-            if (state === States.DIRTY || state === States.NOT_INITIALIZED) {
+            if (state !== States.CLEAN) {
                 const oldState = state;
                 const oldValue = value;
                 const oldSubscriber = subscriber;
@@ -210,7 +220,7 @@ function computed(fn, checkFn) {
                     state =
                         cacheOnUntrackedRead || oldSubscriber
                             ? States.CLEAN
-                            : States.DIRTY;
+                            : States.NOT_INITIALIZED;
                 } catch (e) {
                     destroy();
                     throw e;
@@ -244,6 +254,7 @@ function computed(fn, checkFn) {
 
             return value;
         },
+        destroy,
         $$computed: true,
     };
 }
@@ -256,18 +267,21 @@ function reaction(fn, manager) {
     let children = [];
     let isDestroyed = false;
 
-    const destroy = () => {
+    const unsubscribe = () => {
         subscriptions.forEach((subs) => subs._removeSubscriber(self));
         subscriptions = [];
 
-        children.forEach((child) => child.destroy());
+        children.forEach((child) => child._destroy());
         children = [];
+    }
 
+    const destroy = () => {
+        unsubscribe();
         isDestroyed = true;
     };
 
     function run() {
-        destroy();
+        unsubscribe();
 
         subscriber && subscriber._addChild(self);
 
@@ -293,11 +307,12 @@ function reaction(fn, manager) {
         _notify(state, subscription) {
             if (state === States.MAYBE_DIRTY) {
                 stateActualizationQueue.push(subscription);
-            } else if (!isDestroyed) {
-                destroy();
-                reactionsQueue.push(manager || run);
+            } else {
+                unsubscribe();
+                reactionsQueue.push(() => !isDestroyed && (manager || run)());
             }
         },
+        _destroy: destroy,
     };
 
     return {

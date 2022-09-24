@@ -55,10 +55,11 @@ export interface IObservable<T> {
 
 export interface IComputed<T> {
     readonly value: T;
+    destroy: () => void;
     $$computed: true;
 }
 
-export interface IReaction<Args, Result> {
+export interface IReaction<Args extends any[], Result> {
     run: (...args: Args) => Result;
     destroy: () => void;
     unsubscribe: () => void;
@@ -67,31 +68,31 @@ export interface IReaction<Args, Result> {
 
 export function configure(config: IConfig): void;
 
-export function observable<T>(
+export function observable<T, S = T>(
     value: T,
-    checkFn?: (prev: T, next: T) => boolean
+    checkFn?: (prev: S, next: S) => boolean
 ): IObservable<T>;
 
-declare module observable {
-    export function prop<T>(
+export declare module observable {
+    export function prop<T, S = T>(
         value: T,
-        checkFn?: (prev: T, next: T) => boolean
+        checkFn?: (prev: S, next: S) => boolean
     ): T;
 }
 
-export function computed<T>(
+export function computed<T, S = T>(
     fn: () => T,
-    checkFn?: (prev: T, next: T) => boolean
+    checkFn?: (prev: S, next: S) => boolean
 ): IComputed<T>;
 
-declare module computed {
-    export function prop<T>(
+export declare module computed {
+    export function prop<T, S = T>(
         fn: () => T,
-        checkFn?: (prev: T, next: T) => boolean
+        checkFn?: (prev: S, next: S) => boolean
     ): T;
 }
 
-export function reaction<Args, Result>(
+export function reaction<Args extends any[], Result>(
     fn: (...args: Args) => Result,
     manager?: () => void
 ): IReaction<Args, Result>;
@@ -100,7 +101,7 @@ export function tx(thunk: () => void): void;
 
 export function utx<T>(fn: () => T): T;
 
-export function action<Args, Result>(
+export function action<Args extends any[], Result>(
     fn: (...args: Args) => Result
 ): (...args: Args) => Result;
 
@@ -110,9 +111,5 @@ export function makeModel<T extends Model, S extends ReturnModel<T>>(
     _model: T
 ): S;
 
-type MakeObservableReturn<T> = {
-    [Prop in keyof T]: T[Prop];
-};
-
-export function makeObservable<T extends Record>(obj: T): MakeObservableReturn<T>;
+export function makeObservable<T extends Record<any, any>>(obj: T): T;
 export function makeObservable<T, S extends T>(_this: S, obj: T): S;
