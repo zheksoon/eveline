@@ -1,8 +1,25 @@
-<h1 align="center">Eveline</h1>
+<p align="center">
+  <img align="center" src="https://github.com/zheksoon/eveline/blob/main/assets/eveline-logo.svg?sanitize=true" width="350" alt="Eveline" /> 
+</p>
 
-<p align="center">☘️ Full-featured 1KB state management (WIP) ☘️</p>
+<p align="center">☘️ Full-featured 1KB state management ☘️</p>
 
-* 🚀 Reactive observable and computed values - just like MobX or Preact Signals
+<p align="center">
+  <a href="https://www.npmjs.com/package/eveline" > 
+    <img src="https://badgen.net/npm/v/eveline?color=5fbfcd"/> 
+  </a>
+  <a href="https://bundlephobia.com/package/eveline" > 
+    <img src="https://badgen.net/bundlephobia/minzip/eveline?color=5fbfcd"/> 
+  </a>
+  <a href="https://codecov.io/gh/zheksoon/eveline" > 
+    <img src="https://badgen.net/codecov/c/github/zheksoon/eveline?color=5fbfcd"/> 
+  </a>
+  <a href="https://github.com/zheksoon/eveline/blob/main/LICENSE" > 
+    <img src="https://badgen.net/github/license/zheksoon/eveline?color=5fbfcd"/> 
+  </a>
+</p>
+
+* 🚀 Reactive observable and computed values - just like MobX, Solid.js or Preact Signals
 * 👁 Transparency - no data glitches guaranteed
 * 🔄 Transactional updates - no unexpected side-effects
 * 🙈 Lazyness - nothing happens until you need a value
@@ -10,7 +27,8 @@
 * ✅ Optimality - nothing can be done significantly better with all the guarantees
 * ⚙️ Customizable reaction scheduler for async flows
 * 🥏 Composable transparent models for convenient development
-* ⭐️ Full TypeScript support 
+* 💯 100% tests coverage with complex cases
+* ⭐️ Full TypeScript support
 * 📦 ...and all in 1KB package
 
 ## Installation
