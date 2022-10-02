@@ -1,7 +1,7 @@
 {
     "name": "eveline",
     "description": "☘️ Full-featured 1KB reactive state management ☘️",
-    "version": "0.0.5",
+    "version": "0.0.6",
     "source": "src/eveline.js",
     "main": "./dist/eveline.js",
     "umd:main": "./dist/eveline.umd.js",
@@ -15,9 +15,17 @@
             "umd": "./dist/eveline.umd.js",
             "import": "./dist/eveline.mjs",
             "require": "./dist/eveline.js"
+        },
+        "./react": {
+            "types": "./react/eveline-react.d.ts",
+            "browser": "./react/dist/eveline-react.module.js",
+            "umd": "./react/dist/eveline-react.umd.js",
+            "import": "./react/dist/eveline-react.mjs",
+            "require": "./react/dist/eveline-react.js"
         }
     },
     "files": [
+        "react/",
         "src/",
         "dist/",
         "LICENSE",
@@ -29,7 +37,7 @@
     "scripts": {
         "test": "jest",
         "test:coverage": "jest --coverage",
-        "build": "microbundle --generateTypes=false"
+        "build": "microbundle --generateTypes=false && microbundle --generateTypes=false --cwd=react"
     },
     "repository": {
         "type": "git",
@@ -52,6 +60,9 @@
         "url": "https://github.com/zheksoon/eveline/issues"
     },
     "homepage": "https://github.com/zheksoon/eveline#readme",
+    "peerDependencies": {
+        "react": "^16.8.0"
+    },
     "devDependencies": {
         "jest": "^29.0.3",
         "microbundle": "^0.15.1"

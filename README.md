@@ -1,5 +1,5 @@
 <p align="center">
-  <img align="center" src="https://github.com/zheksoon/eveline/blob/main/assets/eveline-logo.svg?sanitize=true" width="350" alt="Eveline" /> 
+  <img align="center" src="https://github.com/zheksoon/eveline/blob/main/assets/eveline-logo.svg?raw=true" width="350" alt="Eveline" /> 
 </p>
 
 <p align="center">☘️ Full-featured 1KB state management ☘️</p>
@@ -9,7 +9,10 @@
     <img src="https://badgen.net/npm/v/eveline?color=5fbfcd"/> 
   </a>
   <a href="https://bundlephobia.com/package/eveline" > 
-    <img src="https://badgen.net/bundlephobia/minzip/eveline?color=5fbfcd"/> 
+    <img src="https://badgen.net/badgesize/gzip/file-url/unpkg.com/eveline/dist/eveline.js?color=5fbfcd&label=core"/> 
+  </a>
+  <a href="https://bundlephobia.com/package/eveline" > 
+    <img src="https://badgen.net/badgesize/gzip/file-url/unpkg.com/eveline/react/dist/eveline-react.js?color=5fbfcd&label=eveline/react"/>
   </a>
   <a href="https://codecov.io/gh/zheksoon/eveline" > 
     <img src="https://badgen.net/codecov/c/github/zheksoon/eveline?color=5fbfcd"/> 
@@ -27,6 +30,7 @@
 * ✅ Optimality - nothing can be done significantly better with all the guarantees
 * ⚙️ Customizable reaction scheduler for async flows
 * 🥏 Composable transparent models for convenient development
+* 💾 IE11 support - just ES6 `Set` is required
 * 💯 100% tests coverage with complex cases
 * ⭐️ Full TypeScript support
 * 📦 ...and all in 1KB package
@@ -99,7 +103,7 @@ Easily make observable values transparent and collocate related computeds and ac
 
 ```jsx
 import { makeModel } from 'eveline';
-import { reactive } from 'eveline/react';
+import { observer } from 'eveline/react';
 
 const makeCounter = (initial) => {
   const self = makeModel({
@@ -118,7 +122,7 @@ const makeCounter = (initial) => {
   return self;
 }
 
-const Counter = reactive(({ model }) => {
+const Counter = observer(({ model }) => {
   return <>
     Double of {model.count} is {model.double}
     <button onClick={model.inc}>+</button>

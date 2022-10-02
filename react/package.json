@@ -1,0 +1,58 @@
+{
+    "name": "eveline-react",
+    "description": "React bindings for Eveline state management",
+    "version": "0.1.0",
+    "source": "./eveline-react.js",
+    "main": "./dist/eveline-react.js",
+    "umd:main": "./dist/eveline-react.umd.js",
+    "module": "./dist/eveline-react.module.js",
+    "unpkg": "./dist/eveline-react.umd.js",
+    "types": "./eveline-react.d.ts",
+    "exports": {
+        ".": {
+            "types": "./eveline-react.d.ts",
+            "browser": "./dist/eveline-react.module.js",
+            "umd": "./dist/eveline-react.umd.js",
+            "import": "./dist/eveline-react.mjs",
+            "require": "./dist/eveline-react.js"
+        }
+    },
+    "files": [
+        "dist/",
+        "package.json"
+    ],
+    "scripts": {
+        "build": "microbundle --generateTypes=false"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/zheksoon/eveline.git"
+    },
+    "keywords": [
+        "state",
+        "management",
+        "signal",
+        "observable",
+        "computed",
+        "reactive",
+        "frp",
+        "tfrp",
+        "react"
+    ],
+    "author": "Eugene Daragan",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/zheksoon/eveline/issues"
+    },
+    "homepage": "https://github.com/zheksoon/eveline#readme",
+    "peerDependencies": {
+        "react": "^16.8.0",
+        "eveline": "^0.0.5"
+    },
+    "devDependencies": {
+        "microbundle": "^0.15.1"
+    },
+    "mangle": {
+        "regex": "^_"
+    }
+}
