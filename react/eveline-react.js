@@ -71,7 +71,7 @@ function createFinalizationRegistryCheckStrategy() {
 }
 
 const abandonedRendererCheckStrategy =
-    typeof FinalizationRegistry !== "undefined"()
+    typeof FinalizationRegistry !== "undefined"
         ? createFinalizationRegistryCheckStrategy()
         : createDebounceQueueCheckStrategy();
 
@@ -100,10 +100,10 @@ export function useObserver(fn) {
 
     const isEffectCleanupExecuted = useRef(false);
 
-    abandonedRendererCheckStrategy.add(retainedObject, r);
+    abandonedRendererCheckStrategy._add(retainedObject, r);
 
     useEffect(() => {
-        abandonedRendererCheckStrategy.remove(retainedObject, r);
+        abandonedRendererCheckStrategy._remove(retainedObject, r);
 
         if (isEffectCleanupExecuted.current) {
             r.subscribe();
@@ -174,7 +174,7 @@ export function observerClass(Component) {
         }
 
         componentDidMount() {
-            abandonedRendererCheckStrategy.remove(
+            abandonedRendererCheckStrategy._remove(
                 this._retainedObject,
                 this._reaction
             );
@@ -189,7 +189,7 @@ export function observerClass(Component) {
                 return super.render();
             }
 
-            abandonedRendererCheckStrategy.add(
+            abandonedRendererCheckStrategy._add(
                 this._retainedObject,
                 this._reaction
             );
